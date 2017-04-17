@@ -1,10 +1,11 @@
+[![](https://jitpack.io/v/Blincheng/Toast.svg)](https://jitpack.io/#Blincheng/Toast)
+
 EToast 一个关闭系统消息通知后依然可以显示的Toast，并且用在作者自己的所有项目中，会跟随Android的发展持续更新迭代
 
 使用方法和Toast完全一致，如下：
 
 
 Toast.makeText(MainActivity.this,"我是一个屏蔽通知我也是可以显示的Toast",Toast.LENGTH_SHORT).show();
-
 
 具体使用如下：
 Step 1. Add the JitPack repository to your build file
