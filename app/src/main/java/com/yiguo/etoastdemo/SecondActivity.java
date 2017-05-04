@@ -7,8 +7,13 @@ import android.view.View;
 
 import com.yiguo.toast.Toast;
 
-public class MainActivity extends Activity {
+/**
+ * Author: Blincheng.
+ * Date: 2017/5/4.
+ * Description:
+ */
 
+public class SecondActivity extends Activity{
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -16,13 +21,13 @@ public class MainActivity extends Activity {
         findViewById(R.id.textView).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(MainActivity.this,"我是一个屏蔽通知我也是可以显示的Toast",Toast.LENGTH_SHORT).show();
+                Toast.makeText(SecondActivity.this,"我是一个屏蔽通知我也是可以显示的Toast",Toast.LENGTH_SHORT).show();
             }
         });
         findViewById(R.id.textView1).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(MainActivity.this,SecondActivity.class));
+                startActivity(new Intent(SecondActivity.this,SecondActivity.class));
             }
         });
         findViewById(R.id.textView2).setOnClickListener(new View.OnClickListener() {

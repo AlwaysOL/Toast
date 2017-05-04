@@ -2,14 +2,14 @@ package com.yiguo.toast;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.res.Resources;
-import android.os.Handler;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import java.lang.ref.WeakReference;
 
 
 /**
@@ -19,30 +19,25 @@ import android.widget.TextView;
 public class EToast {
     public static final int LENGTH_SHORT = 0;
     public static final int LENGTH_LONG = 1;
-    private static EToast result;
     private final int ANIMATION_DURATION = 600;
-    private static TextView mTextView;
+    private WeakReference<Activity> reference;
+    private TextView mTextView;
     private ViewGroup container;
     private View v;
-
-    private int HIDE_DELAY = 2000;
-
     private LinearLayout mContainer;
+    private int HIDE_DELAY = 2000;
     private AlphaAnimation mFadeOutAnimation;
     private AlphaAnimation mFadeInAnimation;
-
     private boolean isShow = false;
-    private static Context mContext;
-    private Handler mHandler = new Handler();
     private String TOAST_TAG = "EToast_Log";
 
-    private EToast(Context context) {
-        mContext = context;
-        container = (ViewGroup) ((Activity) context)
+    private EToast(Activity activity) {
+        reference = new WeakReference<>(activity);
+        container = (ViewGroup) activity
                 .findViewById(android.R.id.content);
         View viewWithTag = container.findViewWithTag(TOAST_TAG);
         if(viewWithTag == null){
-            v = ((Activity) context).getLayoutInflater().inflate(
+            v = activity.getLayoutInflater().inflate(
                     R.layout.etoast, container);
             v.setTag(TOAST_TAG);
         }else{
@@ -53,30 +48,25 @@ public class EToast {
         mTextView = (TextView) v.findViewById(R.id.mbMessage);
     }
 
-    public static EToast makeText(Context context, String message, int HIDE_DELAY) {
-        if(result == null){
-            result = new EToast(context);
-        }else{
-            if(!mContext.getClass().getName().equals(context.getClass().getName())){
-                result = new EToast(context);
+    /**
+     * @param context must instanceof Activity
+     * */
+    public static EToast makeText(Context context, CharSequence message, int HIDE_DELAY) {
+        if(context instanceof Activity){
+            EToast eToast = new EToast((Activity) context);
+            if(HIDE_DELAY == LENGTH_LONG){
+                eToast.HIDE_DELAY = 2500;
+            }else{
+                eToast.HIDE_DELAY = 1500;
             }
-        }
-        if(HIDE_DELAY == LENGTH_LONG){
-            result.HIDE_DELAY = 2500;
+            eToast.setText(message);
+            return eToast;
         }else{
-            result.HIDE_DELAY = 1500;
+            throw new RuntimeException("EToast @param context must instanceof Activity");
         }
-        mTextView.setText(message);
-        return result;
-    };
+    }
     public static EToast makeText(Context context, int resId, int HIDE_DELAY) {
-        String mes = "";
-        try{
-            mes = context.getResources().getString(resId);
-        } catch (Resources.NotFoundException e) {
-            e.printStackTrace();
-        }
-        return makeText(context,mes,HIDE_DELAY);
+        return makeText(context,context.getText(resId),HIDE_DELAY);
     }
     public void show() {
         if(isShow){
@@ -95,7 +85,8 @@ public class EToast {
 
                     @Override
                     public void onAnimationEnd(Animation animation) {
-                        mContainer.setVisibility(View.GONE);
+                        if(!reference.get().isFinishing())
+                            mContainer.setVisibility(View.GONE);
                     }
 
                     @Override
@@ -107,32 +98,32 @@ public class EToast {
         mFadeInAnimation.setDuration(ANIMATION_DURATION);
 
         mContainer.startAnimation(mFadeInAnimation);
-        mHandler.postDelayed(mHideRunnable, HIDE_DELAY);
+        mContainer.postDelayed(mHideRunnable,HIDE_DELAY);
     }
 
     private final Runnable mHideRunnable = new Runnable() {
         @Override
         public void run() {
-            mContainer.startAnimation(mFadeOutAnimation);
+            if (reference.get().hasWindowFocus())
+                mContainer.startAnimation(mFadeOutAnimation);
+            else{
+                if(!reference.get().isFinishing())
+                    mContainer.setVisibility(View.GONE);
+            }
         }
     };
     public void cancel(){
         if(isShow) {
             isShow = false;
             mContainer.setVisibility(View.GONE);
-            mHandler.removeCallbacks(mHideRunnable);
+            mContainer.removeCallbacks(mHideRunnable);
         }
     }
-    public static void reset(){
-        result = null;
-    }
     public void setText(CharSequence s){
-        if(result == null) return;
-        TextView mTextView = (TextView) v.findViewById(R.id.mbMessage);
-        if(mTextView == null) throw new RuntimeException("This Toast was not created with Toast.makeText()");
+        if(v == null) throw new RuntimeException("This Toast was not created with com.yiguo.toast.Toast.makeText()");
         mTextView.setText(s);
     }
     public void setText(int resId) {
-        setText(mContext.getText(resId));
+        setText(reference.get().getText(resId));
     }
 }
