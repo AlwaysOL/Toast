@@ -2,6 +2,7 @@ package com.yiguo.toast;
 
 import android.app.Activity;
 import android.content.Context;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
@@ -26,10 +27,11 @@ public class EToast {
     private View v;
     private LinearLayout mContainer;
     private int HIDE_DELAY = 2000;
-    private AlphaAnimation mFadeOutAnimation;
-    private AlphaAnimation mFadeInAnimation;
-    private boolean isShow = false;
+    private AlphaAnimation outAnimation;
+    private AlphaAnimation inAnimation;
+    private static boolean isShow = false;
     private String TOAST_TAG = "EToast_Log";
+    private static String activityName = "";
 
     private EToast(Activity activity) {
         reference = new WeakReference<>(activity);
@@ -44,8 +46,11 @@ public class EToast {
             v = viewWithTag;
         }
         mContainer = (LinearLayout) v.findViewById(R.id.mbContainer);
-        mContainer.setVisibility(View.GONE);
         mTextView = (TextView) v.findViewById(R.id.mbMessage);
+        if(!TextUtils.equals(activityName,reference.get().getClass().getName())){
+            activityName = reference.get().getClass().getName();
+            isShow = false;
+        }
     }
 
     /**
@@ -69,43 +74,60 @@ public class EToast {
         return makeText(context,context.getText(resId),HIDE_DELAY);
     }
     public void show() {
-        if(isShow){
-            return;
-        }
-        isShow = true;
-        mFadeInAnimation = new AlphaAnimation(0.0f, 1.0f);
-        mFadeOutAnimation = new AlphaAnimation(1.0f, 0.0f);
-        mFadeOutAnimation.setDuration(ANIMATION_DURATION);
-        mFadeOutAnimation
-                .setAnimationListener(new Animation.AnimationListener() {
+        inAnimation = new AlphaAnimation(0.0f, 1.0f);
+        outAnimation = new AlphaAnimation(1.0f, 0.0f);
+        inAnimation.setDuration(ANIMATION_DURATION);
+        outAnimation.setDuration(ANIMATION_DURATION);
+        inAnimation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                if(!reference.get().isFinishing())
+                    mTextView.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                if(!reference.get().isFinishing())
+                    mContainer.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+        outAnimation.setAnimationListener(new Animation.AnimationListener() {
                     @Override
                     public void onAnimationStart(Animation animation) {
-                        isShow = false;
                     }
 
                     @Override
                     public void onAnimationEnd(Animation animation) {
                         if(!reference.get().isFinishing())
                             mContainer.setVisibility(View.GONE);
+                        isShow = false;
                     }
 
                     @Override
                     public void onAnimationRepeat(Animation animation) {
                     }
                 });
-        mContainer.setVisibility(View.VISIBLE);
-
-        mFadeInAnimation.setDuration(ANIMATION_DURATION);
-
-        mContainer.startAnimation(mFadeInAnimation);
+        if(isShow){
+            mContainer.removeCallbacks(oldRun);
+            mContainer.postDelayed(mHideRunnable,HIDE_DELAY);
+        }else{
+            mContainer.startAnimation(inAnimation);
+            isShow = true;
+        }
         mContainer.postDelayed(mHideRunnable,HIDE_DELAY);
+        oldRun = mHideRunnable;
     }
-
-    private final Runnable mHideRunnable = new Runnable() {
+    private static Runnable oldRun;
+    private Runnable mHideRunnable = new Runnable() {
         @Override
         public void run() {
             if (reference.get().hasWindowFocus())
-                mContainer.startAnimation(mFadeOutAnimation);
+                mContainer.startAnimation(outAnimation);
             else{
                 if(!reference.get().isFinishing())
                     mContainer.setVisibility(View.GONE);
