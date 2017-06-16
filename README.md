@@ -22,7 +22,7 @@ Step 2. Add the dependency
 
 
   	dependencies {
-		compile 'com.github.Blincheng:Toast:v1.4'
+		compile 'com.github.Blincheng:Toast:v1.4.1'
 	}
   
   
