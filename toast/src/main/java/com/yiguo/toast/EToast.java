@@ -65,6 +65,7 @@ public class EToast {
                 eToast.HIDE_DELAY = 1500;
             }
             eToast.setText(message);
+            
             return eToast;
         }else{
             throw new RuntimeException("EToast @param context must instanceof Activity");
@@ -78,34 +79,18 @@ public class EToast {
         outAnimation = new AlphaAnimation(1.0f, 0.0f);
         inAnimation.setDuration(ANIMATION_DURATION);
         outAnimation.setDuration(ANIMATION_DURATION);
-        inAnimation.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-                if(!reference.get().isFinishing())
-                    mTextView.setVisibility(View.VISIBLE);
-            }
-
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                if(!reference.get().isFinishing())
-                    mContainer.setVisibility(View.VISIBLE);
-            }
-
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-
-            }
-        });
         outAnimation.setAnimationListener(new Animation.AnimationListener() {
                     @Override
                     public void onAnimationStart(Animation animation) {
+                        //该动画只要开始，就认为上次显示已经结束，如果这个时候又show，则直接终止动画
+                        isShow = false;
                     }
 
                     @Override
                     public void onAnimationEnd(Animation animation) {
-                        if(!reference.get().isFinishing())
-                            mContainer.setVisibility(View.GONE);
-                        isShow = false;
+                        if(!reference.get().isFinishing()){
+                            mTextView.setVisibility(View.GONE);
+                        }
                     }
 
                     @Override
@@ -113,9 +98,13 @@ public class EToast {
                     }
                 });
         if(isShow){
+            if(mContainer.getAnimation() != null)
+                mContainer.getAnimation().cancel();
             mContainer.removeCallbacks(oldRun);
             mContainer.postDelayed(mHideRunnable,HIDE_DELAY);
         }else{
+            if(!reference.get().isFinishing())
+                mTextView.setVisibility(View.VISIBLE);
             mContainer.startAnimation(inAnimation);
             isShow = true;
         }
@@ -130,14 +119,14 @@ public class EToast {
                 mContainer.startAnimation(outAnimation);
             else{
                 if(!reference.get().isFinishing())
-                    mContainer.setVisibility(View.GONE);
+                    mTextView.setVisibility(View.GONE);
             }
         }
     };
     public void cancel(){
         if(isShow) {
             isShow = false;
-            mContainer.setVisibility(View.GONE);
+            mTextView.setVisibility(View.GONE);
             mContainer.removeCallbacks(mHideRunnable);
         }
     }
