@@ -22,7 +22,7 @@ public class MainActivity extends Activity {
         findViewById(R.id.textView3).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(MainActivity.this,"我是一个屏蔽通知我也是可以显示的Toast改变文字",Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this,"短文本",Toast.LENGTH_SHORT).show();
             }
         });
         findViewById(R.id.textView1).setOnClickListener(new View.OnClickListener() {

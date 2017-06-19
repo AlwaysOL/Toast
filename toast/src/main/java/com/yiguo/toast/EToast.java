@@ -7,7 +7,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
@@ -25,7 +24,6 @@ public class EToast {
     private TextView mTextView;
     private ViewGroup container;
     private View v;
-    private LinearLayout mContainer;
     private int HIDE_DELAY = 2000;
     private AlphaAnimation outAnimation;
     private AlphaAnimation inAnimation;
@@ -45,7 +43,6 @@ public class EToast {
         }else{
             v = viewWithTag;
         }
-        mContainer = (LinearLayout) v.findViewById(R.id.mbContainer);
         mTextView = (TextView) v.findViewById(R.id.mbMessage);
         if(!TextUtils.equals(activityName,reference.get().getClass().getName())){
             activityName = reference.get().getClass().getName();
@@ -98,17 +95,14 @@ public class EToast {
                     }
                 });
         if(isShow){
-            if(mContainer.getAnimation() != null)
-                mContainer.getAnimation().cancel();
-            mContainer.removeCallbacks(oldRun);
-            mContainer.postDelayed(mHideRunnable,HIDE_DELAY);
+            mTextView.removeCallbacks(oldRun);
+            mTextView.postDelayed(mHideRunnable,HIDE_DELAY);
         }else{
-            if(!reference.get().isFinishing())
-                mTextView.setVisibility(View.VISIBLE);
-            mContainer.startAnimation(inAnimation);
+            mTextView.startAnimation(inAnimation);
             isShow = true;
         }
-        mContainer.postDelayed(mHideRunnable,HIDE_DELAY);
+        mTextView.setVisibility(View.VISIBLE);
+        mTextView.postDelayed(mHideRunnable,HIDE_DELAY);
         oldRun = mHideRunnable;
     }
     private static Runnable oldRun;
@@ -116,10 +110,12 @@ public class EToast {
         @Override
         public void run() {
             if (reference.get().hasWindowFocus())
-                mContainer.startAnimation(outAnimation);
+                mTextView.startAnimation(outAnimation);
             else{
-                if(!reference.get().isFinishing())
+                if(!reference.get().isFinishing()){
                     mTextView.setVisibility(View.GONE);
+                    isShow = false;
+                }
             }
         }
     };
@@ -127,7 +123,7 @@ public class EToast {
         if(isShow) {
             isShow = false;
             mTextView.setVisibility(View.GONE);
-            mContainer.removeCallbacks(mHideRunnable);
+            mTextView.removeCallbacks(mHideRunnable);
         }
     }
     public void setText(CharSequence s){
